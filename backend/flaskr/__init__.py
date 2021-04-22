@@ -12,34 +12,58 @@ def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
   setup_db(app)
+  CORS(app)
   
-  '''
-  @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
-  '''
+  # Setup CORS
+  @app.after_request
+  def after_request(response):
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS')
+    return response
 
-  '''
-  @TODO: Use the after_request decorator to set Access-Control-Allow
-  '''
+  
+  def paginate_questions(request, list):
+    page = request.args.get('page', 1, type=int)
+    start = (page - 1) * QUESTIONS_PER_PAGE
+    end = start + QUESTIONS_PER_PAGE
 
-  '''
-  @TODO: 
-  Create an endpoint to handle GET requests 
-  for all available categories.
-  '''
+    questions = [question.format() for question in list]
+
+    return questions[start:end]
+
+  
+  @app.route('/categories')
+  def get_categories():
+    categories = Category.query.all()
+    formatted_categories = [category.format() for category in categories]
+
+    if len(categories) == 0:
+      abort(404)
+
+    return jsonify({
+      'success': True,
+      'categories': formatted_categories
+    })
 
 
-  '''
-  @TODO: 
-  Create an endpoint to handle GET requests for questions, 
-  including pagination (every 10 questions). 
-  This endpoint should return a list of questions, 
-  number of total questions, current category, categories. 
+  @app.route('/questions')
+  def get_questions():
+    questions = Question.query.all()
+    current_questions = paginate_questions(request, questions)
 
-  TEST: At this point, when you start the application
-  you should see questions and categories generated,
-  ten questions per page and pagination at the bottom of the screen for three pages.
-  Clicking on the page numbers should update the questions. 
-  '''
+    if len(current_questions) == 0:
+      abort(404)
+
+    categories = Category.query.all()
+    formatted_categories = [category.format() for category in categories]
+
+    return jsonify({
+      'success': True,
+      'questions': current_questions,
+      'total_questions': len(questions),
+      'current_category': 1,
+      'categories': formatted_categories
+    })
 
   '''
   @TODO: 
@@ -79,7 +103,25 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
+  @app.route('/categories/<int:category_id>/questions')
+  def get_questions_by_category(category_id):
+    category = Category.query.filter(Category.id == category_id).one_or_none()
 
+    if category is None:
+      abort(404)
+
+    questions = Question.query.filter(Question.category == category.id).all()
+    formatted_questions = [question.format() for question in questions]
+
+    if len(questions) == 0:
+      abort(404)
+
+    return jsonify({
+      'success': True,
+      'questions': formatted_questions,
+      'total_questions': len(questions),
+      'current_category': category.id
+    })
 
   '''
   @TODO: 
@@ -93,11 +135,14 @@ def create_app(test_config=None):
   and shown whether they were correct or not. 
   '''
 
-  '''
-  @TODO: 
-  Create error handlers for all expected errors 
-  including 404 and 422. 
-  '''
+
+  @app.errorhandler(404)
+  def resource_not_found(error):
+    return jsonify({
+      'success': False,
+      'error': 404,
+      'message': 'resource not found'
+    }), 404
   
   return app
 
