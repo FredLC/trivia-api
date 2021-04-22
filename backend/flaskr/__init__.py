@@ -65,24 +65,64 @@ def create_app(test_config=None):
       'categories': formatted_categories
     })
 
-  '''
-  @TODO: 
-  Create an endpoint to DELETE question using a question ID. 
+  
+  @app.route('/questions/<int:question_id>', methods=['DELETE'])
+  def delete_question(question_id):
+    try:
+      question = Question.query.filter(Question.id == question_id).one_or_none()
 
-  TEST: When you click the trash icon next to a question, the question will be removed.
-  This removal will persist in the database and when you refresh the page. 
-  '''
+      if question is None:
+        abort(404)
 
-  '''
-  @TODO: 
-  Create an endpoint to POST a new question, 
-  which will require the question and answer text, 
-  category, and difficulty score.
+      question.delete()
 
-  TEST: When you submit a question on the "Add" tab, 
-  the form will clear and the question will appear at the end of the last page
-  of the questions list in the "List" tab.  
-  '''
+      questions = Question.query.all()
+      current_questions = paginate_questions(request, questions)
+
+      return jsonify({
+        'success': True,
+        'deleted': question.id,
+        'questions': current_questions,
+        'total_questions': len(questions),
+        'current_category': 1
+      })
+
+    except:
+      abort(422)
+
+
+  @app.route('/questions', methods=['POST'])
+  def create_question():
+    body = request.get_json()
+
+    question = body.get('question', None)
+    answer = body.get('answer', None)
+    difficulty = body.get('difficulty', None)
+    category = body.get('category', None)
+    search_term = body.get('searchTerm', None)
+
+    try:
+      if search_term:
+        pass
+      else:
+        question = Question(question=question, answer=answer, difficulty=difficulty, category=category)
+
+        question.insert()
+
+        questions = Question.query.all()
+        current_questions = paginate_questions(request, questions)
+
+        return jsonify({
+          'success': True,
+          'created': question.id,
+          'questions': current_questions,
+          'total_questions': len(questions),
+          'current_category': 1
+        })
+
+    except:
+      abort(422)
+
 
   '''
   @TODO: 
@@ -95,14 +135,7 @@ def create_app(test_config=None):
   Try using the word "title" to start. 
   '''
 
-  '''
-  @TODO: 
-  Create a GET endpoint to get questions based on category. 
-
-  TEST: In the "List" tab / main screen, clicking on one of the 
-  categories in the left column will cause only questions of that 
-  category to be shown. 
-  '''
+  
   @app.route('/categories/<int:category_id>/questions')
   def get_questions_by_category(category_id):
     category = Category.query.filter(Category.id == category_id).one_or_none()
@@ -136,6 +169,15 @@ def create_app(test_config=None):
   '''
 
 
+  @app.errorhandler(405)
+  def method_not_allowed(error):
+    return jsonify({
+      'success': False,
+      'error': 405,
+      'message': 'method not allowed'
+    }), 405
+
+
   @app.errorhandler(404)
   def resource_not_found(error):
     return jsonify({
@@ -143,6 +185,25 @@ def create_app(test_config=None):
       'error': 404,
       'message': 'resource not found'
     }), 404
+
+
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      'success': False,
+      'error': 422,
+      'message': 'unprocessable'
+    }), 422
+
+
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      'success': False,
+      'error': 400,
+      'message': 'bad request'
+    }), 400
+
   
   return app
 
