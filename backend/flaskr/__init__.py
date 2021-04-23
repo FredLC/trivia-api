@@ -103,7 +103,14 @@ def create_app(test_config=None):
 
     try:
       if search_term:
-        pass
+        questions = Question.query.filter(Question.question.ilike(f"%{search_term}%")).all()
+        current_questions = paginate_questions(request, questions)
+
+        return jsonify({
+          'success': True,
+          'questions': current_questions,
+          'total_questions': len(questions)
+        })
       else:
         question = Question(question=question, answer=answer, difficulty=difficulty, category=category)
 

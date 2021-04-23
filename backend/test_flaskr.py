@@ -96,15 +96,15 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'resource not found')
 
 
-    def test_delete_question(self):
-        res = self.client().delete('/questions/30')
-        data = json.loads(res.data)
+    # def test_delete_question(self):
+    #     res = self.client().delete('/questions/30')
+    #     data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(data['success'], True)
-        self.assertTrue(data['deleted'])
-        self.assertTrue(len(data['questions']))
-        self.assertTrue(data['total_questions'])
+    #     self.assertEqual(res.status_code, 200)
+    #     self.assertEqual(data['success'], True)
+    #     self.assertTrue(data['deleted'])
+    #     self.assertTrue(len(data['questions']))
+    #     self.assertTrue(data['total_questions'])
 
 
     def test_failed_question_deletion(self):
@@ -133,6 +133,16 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 405)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'method not allowed')
+
+
+    def test_search_questions_with_results(self):
+        res = self.client().post('/questions', json={'searchTerm': 'peanut'})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['total_questions'])
+        self.assertEqual(len(data['questions']), 1)
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
