@@ -130,18 +130,6 @@ def create_app(test_config=None):
     except:
       abort(422)
 
-
-  '''
-  @TODO: 
-  Create a POST endpoint to get questions based on a search term. 
-  It should return any questions for whom the search term 
-  is a substring of the question. 
-
-  TEST: Search by any phrase. The questions list will update to include 
-  only question that include that string within their question. 
-  Try using the word "title" to start. 
-  '''
-
   
   @app.route('/categories/<int:category_id>/questions')
   def get_questions_by_category(category_id):
@@ -174,7 +162,34 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  def random_with_exclude(exclude_list, choice_list):
+    rand = random.choice(choice_list)
+    return random_with_exclude(exclude_list, choice_list) if rand['id'] in exclude_list else rand
 
+  @app.route('/quizzes', methods=['POST'])
+  def generate_random_question():
+    body = request.get_json()
+
+    previous_questions = body.get('previous_questions', None)
+    quiz_category = body.get('quiz_category', None)
+
+    if quiz_category['id'] == 0:
+      questions = Question.query.all()
+    else:
+      questions = Question.query.filter(Question.category == quiz_category['id']).all()
+
+    formatted_questions = [question.format() for question in questions]
+
+    if len(previous_questions) != len(questions): 
+      question = random_with_exclude(previous_questions, formatted_questions)
+    else:
+      question = None
+  
+    return jsonify({
+      'success': True,
+      'question': question
+    })
+    
 
   @app.errorhandler(405)
   def method_not_allowed(error):
