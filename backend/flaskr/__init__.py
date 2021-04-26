@@ -9,7 +9,6 @@ from models import setup_db, Question, Category
 QUESTIONS_PER_PAGE = 10
 
 def create_app(test_config=None):
-  # create and configure the app
   app = Flask(__name__)
   setup_db(app)
   CORS(app)
@@ -151,17 +150,7 @@ def create_app(test_config=None):
       'current_category': category.id
     })
 
-  '''
-  @TODO: 
-  Create a POST endpoint to get questions to play the quiz. 
-  This endpoint should take category and previous question parameters 
-  and return a random questions within the given category, 
-  if provided, and that is not one of the previous questions. 
 
-  TEST: In the "Play" tab, after a user selects "All" or a category,
-  one question at a time is displayed, the user is allowed to answer
-  and shown whether they were correct or not. 
-  '''
   def random_with_exclude(exclude_list, choice_list):
     rand = random.choice(choice_list)
     return random_with_exclude(exclude_list, choice_list) if rand['id'] in exclude_list else rand
